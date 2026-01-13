@@ -16,9 +16,9 @@ type TransferStep = "form" | "confirm" | "success" | "error";
 const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
   const { balance, makeTransfer } = useBank();
   const [step, setStep] = useState<TransferStep>("form");
-  const [recipient, setRecipient] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
   const [error, setError] = useState("");
 
   const formatCurrency = (amount: number) => {
@@ -34,8 +34,13 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
 
     const amountNum = parseFloat(amount);
 
-    if (!recipient.trim()) {
-      setError("Please enter a recipient name");
+    if (!accountNumber.trim() || accountNumber.length < 8) {
+      setError("Please enter a valid account number (min 8 digits)");
+      return;
+    }
+
+    if (!recipientName.trim()) {
+      setError("Please enter recipient name");
       return;
     }
 
@@ -54,7 +59,7 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
 
   const handleConfirm = () => {
     const amountNum = parseFloat(amount);
-    const success = makeTransfer(amountNum, recipient, description);
+    const success = makeTransfer(amountNum, recipientName, `To account: ${accountNumber}`);
     
     if (success) {
       setStep("success");
@@ -65,9 +70,9 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
 
   const handleClose = () => {
     setStep("form");
-    setRecipient("");
+    setAccountNumber("");
+    setRecipientName("");
     setAmount("");
-    setDescription("");
     setError("");
     onClose();
   };
@@ -76,22 +81,36 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
     switch (step) {
       case "form":
         return (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="recipient">Recipient Name</Label>
+              <Label htmlFor="accountNumber">Recipient Account Number</Label>
               <Input
-                id="recipient"
-                placeholder="Enter recipient name"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                className="h-12"
+                id="accountNumber"
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter account number"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+                className="h-12 text-base"
+                maxLength={16}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="recipientName">Recipient Name</Label>
+              <Input
+                id="recipientName"
+                placeholder="Enter recipient's full name"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount to Transfer</Label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">
                   $
                 </span>
                 <Input
@@ -102,23 +121,12 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="h-12 pl-8"
+                  className="h-12 pl-8 text-base"
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                Available: {formatCurrency(balance)}
+                Available balance: {formatCurrency(balance)}
               </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Input
-                id="description"
-                placeholder="What's this for?"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="h-12"
-              />
             </div>
 
             {error && (
@@ -127,12 +135,12 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg"
               >
-                <AlertCircle className="w-4 h-4" />
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 {error}
               </motion.div>
             )}
 
-            <Button type="submit" className="w-full h-12 font-semibold">
+            <Button type="submit" className="w-full h-12 font-semibold text-base">
               Continue
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -142,23 +150,21 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
       case "confirm":
         return (
           <div className="space-y-6">
-            <div className="bg-secondary/50 rounded-xl p-6 space-y-4">
+            <div className="bg-secondary/50 rounded-xl p-5 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">To</span>
-                <span className="font-semibold">{recipient}</span>
+                <span className="text-muted-foreground">Account Number</span>
+                <span className="font-mono font-semibold">{accountNumber}</span>
               </div>
               <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Recipient Name</span>
+                <span className="font-semibold">{recipientName}</span>
+              </div>
+              <div className="flex justify-between items-center pt-3 border-t border-border">
                 <span className="text-muted-foreground">Amount</span>
-                <span className="font-display font-bold text-xl">
+                <span className="font-display font-bold text-2xl text-primary">
                   {formatCurrency(parseFloat(amount))}
                 </span>
               </div>
-              {description && (
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Description</span>
-                  <span className="font-medium">{description}</span>
-                </div>
-              )}
             </div>
 
             <div className="flex gap-3">
@@ -181,23 +187,26 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-center py-6"
+            className="text-center py-8"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring" }}
-              className="w-20 h-20 mx-auto mb-6 rounded-full gradient-success flex items-center justify-center"
+              className="w-24 h-24 mx-auto mb-6 rounded-full gradient-success flex items-center justify-center"
             >
-              <CheckCircle2 className="w-10 h-10 text-success-foreground" />
+              <CheckCircle2 className="w-12 h-12 text-success-foreground" />
             </motion.div>
-            <h3 className="text-xl font-display font-bold mb-2">
+            <h3 className="text-2xl font-display font-bold mb-2">
               Transfer Successful!
             </h3>
-            <p className="text-muted-foreground mb-6">
-              {formatCurrency(parseFloat(amount))} sent to {recipient}
+            <p className="text-muted-foreground mb-2">
+              {formatCurrency(parseFloat(amount))}
             </p>
-            <Button onClick={handleClose} className="w-full h-12 font-semibold">
+            <p className="text-muted-foreground mb-8">
+              sent to <span className="font-semibold text-foreground">{recipientName}</span>
+            </p>
+            <Button onClick={handleClose} className="w-full h-12 font-semibold text-base">
               Done
             </Button>
           </motion.div>
@@ -208,18 +217,18 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-center py-6"
+            className="text-center py-8"
           >
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertCircle className="w-10 h-10 text-destructive" />
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="w-12 h-12 text-destructive" />
             </div>
-            <h3 className="text-xl font-display font-bold mb-2">
+            <h3 className="text-2xl font-display font-bold mb-2">
               Transfer Failed
             </h3>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-8">
               Something went wrong. Please try again.
             </p>
-            <Button onClick={() => setStep("form")} className="w-full h-12 font-semibold">
+            <Button onClick={() => setStep("form")} className="w-full h-12 font-semibold text-base">
               Try Again
             </Button>
           </motion.div>
@@ -230,23 +239,17 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleClose}
-            className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card rounded-2xl p-6 shadow-lg z-50"
-          >
-            <div className="flex items-center justify-between mb-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-background"
+        >
+          {/* Header */}
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
+            <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
               <h2 className="text-xl font-display font-bold">
-                {step === "success" ? "" : step === "confirm" ? "Confirm Transfer" : "Send Money"}
+                {step === "success" ? "Complete" : step === "confirm" ? "Confirm Transfer" : "Send Money"}
               </h2>
               {step !== "success" && (
                 <button
@@ -257,9 +260,13 @@ const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Content */}
+          <div className="max-w-lg mx-auto px-4 py-6">
             {renderContent()}
-          </motion.div>
-        </>
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
