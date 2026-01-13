@@ -182,14 +182,6 @@ const Login = () => {
               )}
             </Button>
           </form>
-
-          <div className="mt-8 p-4 bg-secondary/50 rounded-xl">
-            <p className="text-sm text-muted-foreground text-center">
-              <span className="font-medium text-foreground">Demo credentials:</span>
-              <br />
-              Check <code className="text-xs bg-muted px-1.5 py-0.5 rounded">src/config/bankConfig.ts</code>
-            </p>
-          </div>
         </div>
       </motion.div>
     </div>

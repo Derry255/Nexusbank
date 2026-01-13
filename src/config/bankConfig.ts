@@ -4,14 +4,14 @@
 
 // User credentials - change these to your preferred login details
 export const USER_CREDENTIALS = {
-  email: "demo@mybank.com",
-  password: "Demo123!",
-  firstName: "John",
-  lastName: "Smith",
+  email: "sawatchuaphuen-at@gmail.com",
+  password: "Sawat5500",
+  firstName: "Sawat",
+  lastName: "Chuaphueng-at",
 };
 
 // Starting balance - change this to set initial account balance
-export const INITIAL_BALANCE = 12847.53;
+export const INITIAL_BALANCE = 500847.53;
 
 // Transaction history - add, remove, or modify transactions here
 export const INITIAL_TRANSACTIONS = [
